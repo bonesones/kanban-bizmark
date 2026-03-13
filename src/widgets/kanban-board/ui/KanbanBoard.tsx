@@ -13,7 +13,7 @@ import { useTaskActions } from "@/features/task-actions";
 
 import { useBoardStore } from "@/entities/board";
 import { Column } from "@/entities/column";
-import { TaskDetails } from "@/entities/task";
+import { SubtaskDetails, TaskDetails } from "@/entities/task";
 
 import { useClickOutside } from "@/shared/hooks";
 import { PlusIcon } from "@/shared/icons";
@@ -27,10 +27,20 @@ export const KanbanBoard = () => {
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
-  const [selectedTaskId, setSelectedTaskId] = useState<{
-    taskId: number;
-    columnId: number;
-  } | null>(null);
+  const [selectedDrawerItem, setSelectedDrawerItem] = useState<
+    | {
+        type: "task";
+        taskId: number;
+        columnId: number;
+      }
+    | {
+        type: "subtask";
+        taskId: number;
+        subtaskId: number;
+        columnId: number;
+      }
+    | null
+  >(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -42,11 +52,20 @@ export const KanbanBoard = () => {
 
   const columns = useBoardStore((state) => state.board.columns);
 
-  const selectedTask = selectedTaskId
-    ? columns
-        .find((col) => col.id === selectedTaskId.columnId)
-        ?.tasks.find((task) => task.id === selectedTaskId.taskId)
-    : null;
+  const selectedTask =
+    selectedDrawerItem?.type === "task" ||
+    selectedDrawerItem?.type === "subtask"
+      ? columns
+          .find((col) => col.id === selectedDrawerItem.columnId)
+          ?.tasks.find((task) => task.id === selectedDrawerItem.taskId)
+      : null;
+
+  const selectedSubtask =
+    selectedDrawerItem?.type === "subtask" && selectedTask
+      ? (selectedTask.subtasks.find(
+          (s) => s.id === selectedDrawerItem.subtaskId,
+        ) ?? null)
+      : null;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -65,14 +84,37 @@ export const KanbanBoard = () => {
   };
 
   const handleTaskClick = (taskId: number, columnId: number) => {
-    setSelectedTaskId({ taskId, columnId });
+    setSelectedDrawerItem({ type: "task", taskId, columnId });
   };
 
   const handleCloseTaskDetails = () => {
-    setSelectedTaskId(null);
+    setSelectedDrawerItem(null);
   };
 
   useClickOutside(drawerRef, handleCloseTaskDetails);
+
+  const handleSubtaskClick = (subtaskId: number, columnId: number) => {
+    if (!selectedTask) {
+      return;
+    }
+    setSelectedDrawerItem({
+      type: "subtask",
+      taskId: selectedTask.id,
+      subtaskId,
+      columnId,
+    });
+  };
+
+  const handleBackToTask = () => {
+    if (!selectedTask || !selectedDrawerItem) {
+      return;
+    }
+    setSelectedDrawerItem({
+      type: "task",
+      taskId: selectedTask.id,
+      columnId: selectedDrawerItem.columnId,
+    });
+  };
 
   return (
     <div className="bg-white rounded-tl-[10px] pl-5 h-full">
@@ -97,14 +139,28 @@ export const KanbanBoard = () => {
         </DndContext>
 
         <Drawer isOpen={!!selectedTask} drawerRef={drawerRef}>
-          {selectedTask && selectedTaskId && (
-            <TaskDetails
-              task={selectedTask}
-              columnId={selectedTaskId?.columnId}
-              taskActions={taskActions}
-              onClose={handleCloseTaskDetails}
-            />
-          )}
+          {selectedTask &&
+            selectedDrawerItem?.type === "task" &&
+            selectedDrawerItem && (
+              <TaskDetails
+                task={selectedTask}
+                columnId={selectedDrawerItem.columnId}
+                taskActions={taskActions}
+                onClose={handleCloseTaskDetails}
+                onSubtaskClick={handleSubtaskClick}
+              />
+            )}
+
+          {selectedTask &&
+            selectedSubtask &&
+            selectedDrawerItem?.type === "subtask" && (
+              <SubtaskDetails
+                subtask={selectedSubtask}
+                parentTask={{ id: selectedTask.id, name: selectedTask.name }}
+                onBack={handleBackToTask}
+                onClose={handleCloseTaskDetails}
+              />
+            )}
         </Drawer>
 
         <div className="flex-1 pl-5 min-w-96 shrink-0">

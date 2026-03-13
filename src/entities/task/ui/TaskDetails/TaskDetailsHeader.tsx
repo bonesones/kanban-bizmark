@@ -36,7 +36,7 @@ export const TaskDetailsHeader = ({
   };
 
   return (
-    <div className="flex justify-between py-3.5 px-6 border-b border-bgPrimary">
+    <div className="flex justify-between py-3 px-6 border-b border-bgPrimary">
       <div className="flex gap-4 items-center">
         {task.timer.isRunning ? (
           <ButtonWithIcon
@@ -109,7 +109,7 @@ const ButtonWithIcon = ({
   className?: string;
 }) => {
   const className = clsx(
-    "rounded-[10px] flex items-center gap-3 text-sm px-5.5 py-1.75 cursor-pointer",
+    "rounded-[10px] flex items-center gap-3 text-sm px-5.5 h-7.5 cursor-pointer",
     _className,
   );
 

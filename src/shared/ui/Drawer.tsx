@@ -40,7 +40,7 @@ export const Drawer = ({ children, isOpen, drawerRef }: DrawerProps) => {
             stiffness: 200,
             duration: 0.3,
           }}
-          className="fixed right-0 top-0 bottom-0 z-1000 bg-white min-h-screen max-w-4xl min-w-3xl overflow-hidden"
+          className="fixed right-0 top-0 bottom-0 z-1000 bg-white h-screen w-214.5 overflow-hidden shadow-lg"
         >
           {children}
         </motion.div>

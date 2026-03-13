@@ -30,7 +30,7 @@ export const Subtask = ({
         isDone={subtask.isDone}
         toggleSubtaskCompletion={toggleSubtaskCompletion}
       />
-      <span className="text-sm">Разработать прототип</span>
+      <span className="text-sm">{subtask.name}</span>
     </div>
 
     <img src={user} className="w-6 h-6 rounded-full" />

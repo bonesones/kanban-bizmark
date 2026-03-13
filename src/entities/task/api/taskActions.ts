@@ -6,4 +6,5 @@ export type TaskActions = {
   toggleSubtaskCompletion: BoardState["toggleSubtaskCompletion"];
   startTaskTimer: BoardState["startTaskTimer"];
   stopTaskTimer: BoardState["stopTaskTimer"];
+  addSubtask: BoardState["addSubtask"];
 };

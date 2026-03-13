@@ -15,11 +15,14 @@ export const useTaskActions = (): TaskActions => {
   const startTaskTimer = useBoardStore((state) => state.startTaskTimer);
   const stopTaskTimer = useBoardStore((state) => state.stopTaskTimer);
 
+  const addSubtask = useBoardStore((state) => state.addSubtask);
+
   return {
     moveTask,
     toggleTaskCompletion,
     toggleSubtaskCompletion,
     startTaskTimer,
     stopTaskTimer,
+    addSubtask,
   };
 };

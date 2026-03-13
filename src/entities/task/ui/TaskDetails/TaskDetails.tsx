@@ -10,6 +10,7 @@ type TaskDetailsProps = {
   columnId: number;
   taskActions: TaskActions;
   onClose: () => void;
+  onSubtaskClick?: (subtaskId: number, columnId: number) => void;
 };
 
 export const TaskDetails = ({
@@ -17,6 +18,7 @@ export const TaskDetails = ({
   columnId,
   taskActions,
   onClose,
+  onSubtaskClick,
 }: TaskDetailsProps) => {
   const handleToggleTimer = () => {
     if (task.timer.isRunning) {
@@ -36,8 +38,8 @@ export const TaskDetails = ({
         onClose={onClose}
       />
 
-      <div className="flex flex-col justify-between px-6 h-full overflow-y-auto">
-        <div className="flex flex-col">
+      <div className="flex flex-col px-6 h-full min-h-0">
+        <div className="flex flex-col flex-1 min-h-0">
           <h4 className="text-2xl text-textMain font-semibold">{task.name}</h4>
 
           <TaskDetailsMeta />
@@ -48,6 +50,8 @@ export const TaskDetails = ({
             task={task}
             columnId={columnId}
             onSubtaskComplete={taskActions.toggleSubtaskCompletion}
+            onSubtaskClick={onSubtaskClick}
+            onSubtaskAdd={taskActions.addSubtask}
           />
         </div>
 

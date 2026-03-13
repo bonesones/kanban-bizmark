@@ -11,29 +11,37 @@ type TaskDetailsSubtasksProps = {
   task: TaskModel;
   columnId: number;
   onSubtaskComplete: TaskActions["toggleSubtaskCompletion"];
+  onSubtaskAdd: TaskActions["addSubtask"];
+  onSubtaskClick?: (subtaskId: number, columnId: number) => void;
 };
 
 export const TaskDetailsSubtasks = ({
   task,
   columnId,
   onSubtaskComplete,
+  onSubtaskClick,
+  onSubtaskAdd,
 }: TaskDetailsSubtasksProps) => (
-  <div className="flex flex-col gap-2 mt-3">
-    {task.subtasks.map((subtask) => (
-      <TaskDetailSubtasksItem
-        key={subtask.id}
-        taskId={task.id}
-        subtaskId={subtask.id}
-        columnId={columnId}
-        title={subtask.name}
-        isDone={subtask.isDone}
-        onComplete={onSubtaskComplete}
-      />
-    ))}
+  <div className="flex flex-col gap-2 mt-3 flex-1 min-h-0">
+    <div className="overflow-y-auto min-h-0">
+      {task.subtasks.map((subtask) => (
+        <TaskDetailSubtasksItem
+          key={subtask.id}
+          taskId={task.id}
+          subtaskId={subtask.id}
+          columnId={columnId}
+          title={subtask.name}
+          isDone={subtask.isDone}
+          onComplete={onSubtaskComplete}
+          onClick={() => onSubtaskClick?.(subtask.id, columnId)}
+        />
+      ))}
+    </div>
 
     <button
       type="button"
       className="flex gap-4 items-center cursor-pointer text-gray text-sm"
+      onClick={() => onSubtaskAdd?.(task.id, columnId, "Новая подзадача")}
     >
       <PlusIcon className="h-2.25" />
       Добавить подзадачу
@@ -48,6 +56,7 @@ const TaskDetailSubtasksItem = ({
   columnId,
   isDone,
   onComplete,
+  onClick,
 }: {
   taskId: number;
   title: string;
@@ -55,10 +64,11 @@ const TaskDetailSubtasksItem = ({
   subtaskId: number;
   columnId: number;
   onComplete: TaskActions["toggleSubtaskCompletion"];
+  onClick?: () => void;
 }) => (
   <div
     className={clsx(
-      "flex justify-between items-center",
+      "flex justify-between items-center border-t border-t-bgPrimary py-1",
       isDone && "opacity-50",
     )}
   >
@@ -72,7 +82,9 @@ const TaskDetailSubtasksItem = ({
         toggleSubtaskCompletion={onComplete}
       />
 
-      <span className="text-sm text-textMain">{title}</span>
+      <span className="text-sm text-textMain cursor-pointer" onClick={onClick}>
+        {title}
+      </span>
     </div>
 
     <div className="flex gap-2">

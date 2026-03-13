@@ -1,5 +1,3 @@
-import { Activity } from "react";
-
 import { MessageIcon, MoonIcon, NotificationIcon } from "@/shared/icons";
 
 import { user } from "@/assets";
@@ -10,13 +8,12 @@ export const UserPanel = () => (
       {userPanelActions.map((action, index) => (
         <button
           key={index}
+          type="button"
           className="w-7.5 h-7.5 bg-white rounded-full flex items-center justify-center relative cursor-pointer"
         >
-          <Activity
-            mode={action.value === "notifications" ? "visible" : "hidden"}
-          >
-            <div className="w-2.75 h-2.75 bg-accentRed rounded-full absolute -top-px -left-0.5"></div>
-          </Activity>
+          {action.value === "notifications" && (
+            <div className="w-2.75 h-2.75 bg-accentRed rounded-full absolute -top-px -left-0.5" />
+          )}
 
           <action.icon className="w-4 text-textMain" />
         </button>

@@ -1,21 +1,26 @@
 import clsx from "clsx";
 
-export const FavoriteItem = ({ title, color }: FavoriteItemProps) => {
+export const FavoriteItem = ({ title, active, onClick }: FavoriteItemProps) => {
   const className = clsx(
     "w-2.5 h-2.5 rounded-full",
-    color === "green" ? "bg-accentGreen" : "bg-accentLightBlue",
+    active ? "bg-accentLightBlue" : "bg-accentGreen",
   );
 
   return (
-    <div className="flex gap-3 items-center">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex gap-3 items-center cursor-pointer"
+    >
       <div className={className}></div>
       <span className="text-sm font-semibold text-textMain">{title}</span>
-    </div>
+    </button>
   );
 };
 
 export type FavoriteItemProps = {
   title: string;
-  color: "green" | "blue";
+  active: boolean;
   boardId: number;
+  onClick: () => void;
 };

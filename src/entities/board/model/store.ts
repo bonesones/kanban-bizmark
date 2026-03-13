@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import type { Subtask } from "@/entities/task/model/task";
+
 import type { KanbanBoardModel } from "..";
 
-import { MOCK_COLUMNS } from "../api/mockData";
+import {
+  MOCK_COLUMNS,
+  MOCK_COLUMNS_SECOND_BOARD,
+  MOCK_COLUMNS_THIRD_BOARD,
+} from "../api/mockData";
 import {
   findActiveBoard,
   updateActiveBoard,
@@ -30,6 +36,8 @@ export type BoardState = {
 
   startTaskTimer: (taskId: number, columnId: number) => void;
   stopTaskTimer: (taskId: number, columnId: number) => void;
+
+  addSubtask: (taskId: number, columnId: number, title: string) => void;
 };
 
 const INITIAL_BOARD: KanbanBoardModel = {
@@ -39,10 +47,24 @@ const INITIAL_BOARD: KanbanBoardModel = {
   status: "В работе",
 };
 
+const SECOND_BOARD: KanbanBoardModel = {
+  id: 2,
+  name: "Маркетинговая кампания",
+  columns: MOCK_COLUMNS_SECOND_BOARD,
+  status: "Планирование",
+};
+
+const THIRD_BOARD: KanbanBoardModel = {
+  id: 3,
+  name: "Доска разработки",
+  columns: MOCK_COLUMNS_THIRD_BOARD,
+  status: "Планирование",
+};
+
 export const useBoardStore = create<BoardState>()(
   persist(
     (set) => ({
-      boards: [INITIAL_BOARD],
+      boards: [INITIAL_BOARD, SECOND_BOARD, THIRD_BOARD],
       activeBoardId: INITIAL_BOARD.id,
       board: INITIAL_BOARD,
 
@@ -258,6 +280,52 @@ export const useBoardStore = create<BoardState>()(
             board,
           };
         }),
+
+      addSubtask: (taskId, columnId, title) =>
+        set((state) => {
+          const { boards, board } = updateActiveBoard(
+            state,
+            (currentBoard) => ({
+              ...currentBoard,
+              columns: currentBoard.columns.map((column) => {
+                if (column.id !== columnId) {
+                  return column;
+                }
+
+                return {
+                  ...column,
+                  tasks: column.tasks.map((task) => {
+                    if (task.id !== taskId) {
+                      return task;
+                    }
+
+                    const maxSubtaskId = task.subtasks.reduce(
+                      (max, subtask) => Math.max(max, subtask.id),
+                      0,
+                    );
+
+                    const newSubtask: Subtask = {
+                      id: maxSubtaskId + 1,
+                      name: title,
+                      isDone: false,
+                      comments: [],
+                    };
+
+                    return {
+                      ...task,
+                      subtasks: [...task.subtasks, newSubtask],
+                    };
+                  }),
+                };
+              }),
+            }),
+          );
+
+          return {
+            boards,
+            board,
+          };
+        }),
     }),
     {
       name: "kanban-board-storage",
@@ -269,6 +337,3 @@ export const useBoardStore = create<BoardState>()(
     },
   ),
 );
-
-export const useBoardsList = () =>
-  useBoardStore((state) => state.boards.map(({ id, name }) => ({ id, name })));

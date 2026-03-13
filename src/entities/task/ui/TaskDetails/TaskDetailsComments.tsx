@@ -19,10 +19,11 @@ type taskDetailsCommentsItemProps = {
 
 export const TaskDetailsComments = ({ comments }: TaskDetailsCommentsProps) => (
   <div className="flex flex-col gap-2 mt-6 pb-20">
-    {comments.map((comment) => (
-      <TaskDetailsCommentsItem comment={comment} key={comment.id} />
-    ))}
-
+    <div className="overflow-y-auto max-h-60">
+      {comments.map((comment) => (
+        <TaskDetailsCommentsItem comment={comment} key={comment.id} />
+      ))}
+    </div>
     <div className="flex items-center gap-4 mt-4">
       <img src={user} className="h-8" />
 
@@ -42,7 +43,7 @@ export const TaskDetailsComments = ({ comments }: TaskDetailsCommentsProps) => (
 );
 
 const TaskDetailsCommentsItem = ({ comment }: taskDetailsCommentsItemProps) => (
-  <div className="flex gap-4 border-t py-3 border-t-bgPrimary">
+  <div className="flex gap-4 border-t py-5 border-t-bgPrimary">
     <img src={user} className="h-8" />
 
     <div className="flex flex-col gap-2">

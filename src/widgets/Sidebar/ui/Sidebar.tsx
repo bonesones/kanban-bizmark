@@ -1,11 +1,4 @@
-import {
-  FavoriteItem,
-  type FavoriteItemProps,
-} from "@/widgets/Sidebar/ui/FavoriteItem";
-import { NavLink, type NavLinkProps } from "@/widgets/Sidebar/ui/NavLink";
-import { TeamItem, type TeamItemProps } from "@/widgets/Sidebar/ui/TeamItem";
-
-import { useBoardsList, useBoardStore } from "@/entities/board";
+import { useBoardStore } from "@/entities/board";
 
 import {
   ArrowDownIcon,
@@ -17,15 +10,24 @@ import {
 
 import { logo } from "@/assets";
 
-export const Sidebar = () => {
-  const kanbanBoards = useBoardsList();
-  const activeBoardId = useBoardStore((state) => state.activeBoardId);
+import { FavoriteItem, type FavoriteItemProps } from "./FavoriteItem";
+import { NavLink, type NavLinkProps } from "./NavLink";
+import { TeamItem, type TeamItemProps } from "./TeamItem";
 
-  const boardsList = kanbanBoards.map(({ id, name }) => ({
-    boardId: id,
-    title: name,
-    color: id === activeBoardId ? "green" : "blue",
-  })) satisfies FavoriteItemProps[];
+export const Sidebar = () => {
+  const activeBoardId = useBoardStore((state) => state.activeBoardId);
+  const kanbanBoards = useBoardStore((state) => state.boards);
+  const setActiveBoard = useBoardStore((state) => state.setActiveBoard);
+
+  const boardsList = kanbanBoards.map(
+    ({ id, name }) =>
+      ({
+        boardId: id,
+        title: name,
+        active: id === activeBoardId,
+        onClick: () => setActiveBoard(id),
+      }) satisfies FavoriteItemProps,
+  );
 
   return (
     <aside className="w-72">

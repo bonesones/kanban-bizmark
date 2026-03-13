@@ -15,6 +15,7 @@ export type Subtask = {
   id: number;
   name: string;
   isDone: boolean;
+  comments: Comment[];
 };
 
 export type TaskTimer = {
