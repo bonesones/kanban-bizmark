@@ -3,12 +3,14 @@ import clsx from "clsx";
 import { CalendarIcon, PlusIcon } from "@/shared/icons";
 import { UserIcon } from "@/shared/icons/UserIcon";
 
-import type { TaskModel } from "../..";
 import type { TaskActions } from "../../api/taskActions";
+import type { Subtask as SubtaskModel } from "../../model/task";
 import { TaskCompletionButton } from "../TaskCompletionButton";
 
 type TaskDetailsSubtasksProps = {
-  task: TaskModel;
+  rootTaskId: number;
+  parentPath: number[];
+  subtasks: SubtaskModel[];
   columnId: number;
   onSubtaskComplete: TaskActions["toggleSubtaskCompletion"];
   onSubtaskAdd: TaskActions["addSubtask"];
@@ -16,19 +18,21 @@ type TaskDetailsSubtasksProps = {
 };
 
 export const TaskDetailsSubtasks = ({
-  task,
+  rootTaskId,
+  parentPath,
+  subtasks,
   columnId,
   onSubtaskComplete,
   onSubtaskClick,
   onSubtaskAdd,
 }: TaskDetailsSubtasksProps) => (
-  <div className="flex flex-col gap-2 mt-3 flex-1 min-h-0">
-    <div className="overflow-y-auto min-h-0">
-      {task.subtasks.map((subtask) => (
+  <div className="flex min-h-0 flex-1 flex-col gap-2">
+    <div className="min-h-0 overflow-y-auto">
+      {subtasks.map((subtask) => (
         <TaskDetailSubtasksItem
           key={subtask.id}
-          taskId={task.id}
-          subtaskId={subtask.id}
+          rootTaskId={rootTaskId}
+          subtaskPath={[...parentPath, subtask.id]}
           columnId={columnId}
           title={subtask.name}
           isDone={subtask.isDone}
@@ -40,8 +44,10 @@ export const TaskDetailsSubtasks = ({
 
     <button
       type="button"
-      className="flex gap-4 items-center cursor-pointer text-gray text-sm"
-      onClick={() => onSubtaskAdd?.(task.id, columnId, "Новая подзадача")}
+      className="flex shrink-0 gap-4 items-center cursor-pointer text-gray text-sm"
+      onClick={() =>
+        onSubtaskAdd?.(rootTaskId, columnId, parentPath, "Новая подзадача")
+      }
     >
       <PlusIcon className="h-2.25" />
       Добавить подзадачу
@@ -50,18 +56,18 @@ export const TaskDetailsSubtasks = ({
 );
 
 const TaskDetailSubtasksItem = ({
-  taskId,
+  rootTaskId,
   title,
-  subtaskId,
+  subtaskPath,
   columnId,
   isDone,
   onComplete,
   onClick,
 }: {
-  taskId: number;
+  rootTaskId: number;
   title: string;
   isDone: boolean;
-  subtaskId: number;
+  subtaskPath: number[];
   columnId: number;
   onComplete: TaskActions["toggleSubtaskCompletion"];
   onClick?: () => void;
@@ -75,10 +81,10 @@ const TaskDetailSubtasksItem = ({
     <div className="flex gap-3 items-center">
       <TaskCompletionButton
         type="subtask"
-        isDone={isDone}
-        taskId={taskId}
+        taskId={rootTaskId}
         columnId={columnId}
-        subtaskId={subtaskId}
+        subtaskPath={subtaskPath}
+        isDone={isDone}
         toggleSubtaskCompletion={onComplete}
       />
 

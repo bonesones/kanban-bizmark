@@ -11,12 +11,7 @@ export type Task = {
   comments: Comment[];
 };
 
-export type Subtask = {
-  id: number;
-  name: string;
-  isDone: boolean;
-  comments: Comment[];
-};
+export type Subtask = Task;
 
 export type TaskTimer = {
   startedAt: number | null;

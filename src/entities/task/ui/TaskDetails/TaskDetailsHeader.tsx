@@ -10,30 +10,25 @@ import {
 import { formatTime } from "@/shared/lib";
 
 import type { TaskModel } from "../..";
-import type { TaskActions } from "../../api/taskActions";
 import { TaskTimer } from "../TaskTimer";
 
 type TaskDetailsHeaderProps = {
-  onCompleteClick: TaskActions["toggleTaskCompletion"];
+  onComplete: () => void;
   onToggleTimer: () => void;
   task: TaskModel;
-  columnId: number;
   onClose: () => void;
+  onBack?: () => void;
 };
 
 export const TaskDetailsHeader = ({
-  onCompleteClick,
+  onComplete,
   task,
-  columnId,
   onToggleTimer,
   onClose,
+  onBack,
 }: TaskDetailsHeaderProps) => {
   const timeSpentFormatted = formatTime(task.timeSpent);
   const timePlannedFormatted = formatTime(task.timePlanned);
-
-  const handleTaskComplete = () => {
-    onCompleteClick(task.id, columnId);
-  };
 
   return (
     <div className="flex justify-between py-3 px-6 border-b border-bgPrimary">
@@ -71,14 +66,14 @@ export const TaskDetailsHeader = ({
           <ButtonWithIcon
             icon={<CheckIcon className="h-[7.5px]" />}
             title="Задача завершена"
-            onClick={handleTaskComplete}
+            onClick={onComplete}
             className="bg-bgPrimary"
           />
         ) : (
           <ButtonWithIcon
             icon={<CheckIcon className="h-[7.5px]" />}
             title="Завершить задачу"
-            onClick={handleTaskComplete}
+            onClick={onComplete}
             className="bg-green text-white "
           />
         )}
@@ -90,7 +85,7 @@ export const TaskDetailsHeader = ({
 
         <IconButton
           icon={<ArrowRightIcon className="h-2.5" />}
-          onClick={onClose}
+          onClick={onBack ? onBack : onClose}
         />
       </div>
     </div>

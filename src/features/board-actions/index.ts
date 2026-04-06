@@ -3,8 +3,10 @@ import type { BoardActions } from "@/entities/board/api/boardActions";
 
 export const useBoardActions = (): BoardActions => {
   const addColumn = useBoardStore((state) => state.addColumn);
+  const addTask = useBoardStore((state) => state.addTask);
 
   return {
     addColumn,
+    addTask,
   };
 };

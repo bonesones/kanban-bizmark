@@ -11,9 +11,15 @@ type ColumnProps = {
   column: ColumnModel;
   taskActions: TaskActions;
   onTaskClick?: (taskId: number, columnId: number) => void;
+  addTask: (columnId: number, title: string) => void;
 };
 
-export const Column = ({ column, taskActions, onTaskClick }: ColumnProps) => {
+export const Column = ({
+  column,
+  taskActions,
+  onTaskClick,
+  addTask,
+}: ColumnProps) => {
   const { setNodeRef } = useDroppable({
     id: column.id,
     data: {
@@ -31,7 +37,13 @@ export const Column = ({ column, taskActions, onTaskClick }: ColumnProps) => {
         <h2 className="font-semibold">{column.name}</h2>
 
         <div className="flex items-center gap-3">
-          <button type="button" className="cursor-pointer">
+          <button
+            type="button"
+            className="cursor-pointer"
+            onClick={() => addTask(column.id, "Новая задача")}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Добавить задачу"
+          >
             <PlusIcon className="h-[7.5px]" />
           </button>
 

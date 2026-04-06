@@ -15,7 +15,8 @@ type TaskCompletionProps =
       isDone: boolean;
       taskId: number;
       columnId: number;
-      subtaskId: number;
+      /** Цепочка id от корневой задачи до этой подзадачи */
+      subtaskPath: number[];
       toggleSubtaskCompletion: TaskActions["toggleSubtaskCompletion"];
     };
 
@@ -26,7 +27,7 @@ export const TaskCompletionButton = (props: TaskCompletionProps) => {
     if (type === "task") {
       props.toggleTaskCompletion(taskId, columnId);
     } else {
-      props.toggleSubtaskCompletion(taskId, columnId, props.subtaskId);
+      props.toggleSubtaskCompletion(taskId, columnId, props.subtaskPath);
     }
   };
 

@@ -1,6 +1,6 @@
+import { Sidebar } from "@/widgets/Sidebar";
 import { Header } from "@/widgets/header";
 import { KanbanBoard } from "@/widgets/kanban-board";
-import { Sidebar } from "@/widgets/sidebar";
 
 export const ProjectPage = () => (
   <div className="flex h-screen">

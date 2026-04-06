@@ -26,7 +26,7 @@ export const Subtask = ({
         type="subtask"
         taskId={taskId}
         columnId={columnId}
-        subtaskId={subtask.id}
+        subtaskPath={[subtask.id]}
         isDone={subtask.isDone}
         toggleSubtaskCompletion={toggleSubtaskCompletion}
       />

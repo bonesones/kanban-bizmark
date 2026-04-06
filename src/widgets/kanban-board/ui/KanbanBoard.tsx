@@ -13,7 +13,8 @@ import { useTaskActions } from "@/features/task-actions";
 
 import { useBoardStore } from "@/entities/board";
 import { Column } from "@/entities/column";
-import { SubtaskDetails, TaskDetails } from "@/entities/task";
+import { TaskDetails } from "@/entities/task";
+import type { Task as TaskModel } from "@/entities/task/model/task";
 
 import { useClickOutside } from "@/shared/hooks";
 import { PlusIcon } from "@/shared/icons";
@@ -22,25 +23,16 @@ import { Drawer } from "@/shared/ui";
 import { KanbanBoardHeader } from "./KanbanHeader";
 
 export const KanbanBoard = () => {
-  const { addColumn } = useBoardActions();
+  const { addColumn, addTask } = useBoardActions();
   const taskActions = useTaskActions();
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
-  const [selectedDrawerItem, setSelectedDrawerItem] = useState<
-    | {
-        type: "task";
-        taskId: number;
-        columnId: number;
-      }
-    | {
-        type: "subtask";
-        taskId: number;
-        subtaskId: number;
-        columnId: number;
-      }
-    | null
-  >(null);
+  const [selectedDrawerItem, setSelectedDrawerItem] = useState<{
+    taskId: number;
+    columnId: number;
+    subtaskPath?: number[];
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -52,20 +44,26 @@ export const KanbanBoard = () => {
 
   const columns = useBoardStore((state) => state.board.columns);
 
-  const selectedTask =
-    selectedDrawerItem?.type === "task" ||
-    selectedDrawerItem?.type === "subtask"
-      ? columns
-          .find((col) => col.id === selectedDrawerItem.columnId)
-          ?.tasks.find((task) => task.id === selectedDrawerItem.taskId)
-      : null;
+  const selectedTask = selectedDrawerItem
+    ? columns
+        .find((col) => col.id === selectedDrawerItem.columnId)
+        ?.tasks.find((task) => task.id === selectedDrawerItem.taskId)
+    : null;
 
-  const selectedSubtask =
-    selectedDrawerItem?.type === "subtask" && selectedTask
-      ? (selectedTask.subtasks.find(
-          (s) => s.id === selectedDrawerItem.subtaskId,
-        ) ?? null)
-      : null;
+  const selectedItem = (() => {
+    if (!selectedTask || !selectedDrawerItem?.subtaskPath?.length) {
+      return selectedTask ?? null;
+    }
+    let node: TaskModel = selectedTask;
+    for (const id of selectedDrawerItem.subtaskPath) {
+      const next = node.subtasks.find((s) => s.id === id);
+      if (!next) {
+        return null;
+      }
+      node = next as TaskModel;
+    }
+    return node;
+  })();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -84,7 +82,7 @@ export const KanbanBoard = () => {
   };
 
   const handleTaskClick = (taskId: number, columnId: number) => {
-    setSelectedDrawerItem({ type: "task", taskId, columnId });
+    setSelectedDrawerItem({ taskId, columnId });
   };
 
   const handleCloseTaskDetails = () => {
@@ -94,27 +92,36 @@ export const KanbanBoard = () => {
   useClickOutside(drawerRef, handleCloseTaskDetails);
 
   const handleSubtaskClick = (subtaskId: number, columnId: number) => {
-    if (!selectedTask) {
-      return;
-    }
-    setSelectedDrawerItem({
-      type: "subtask",
-      taskId: selectedTask.id,
-      subtaskId,
-      columnId,
+    setSelectedDrawerItem((prev) => {
+      if (!prev) {
+        return null;
+      }
+      return {
+        taskId: prev.taskId,
+        columnId,
+        subtaskPath: [...(prev.subtaskPath ?? []), subtaskId],
+      };
     });
   };
 
   const handleBackToTask = () => {
-    if (!selectedTask || !selectedDrawerItem) {
-      return;
-    }
-    setSelectedDrawerItem({
-      type: "task",
-      taskId: selectedTask.id,
-      columnId: selectedDrawerItem.columnId,
+    setSelectedDrawerItem((prev) => {
+      if (!prev) {
+        return null;
+      }
+      const path = prev.subtaskPath ?? [];
+      if (path.length <= 1) {
+        return { taskId: prev.taskId, columnId: prev.columnId };
+      }
+      return {
+        ...prev,
+        subtaskPath: path.slice(0, -1),
+      };
     });
   };
+
+  const subtaskPath = selectedDrawerItem?.subtaskPath ?? [];
+  const isRootView = subtaskPath.length === 0;
 
   return (
     <div className="bg-white rounded-tl-[10px] pl-5 h-full">
@@ -133,34 +140,26 @@ export const KanbanBoard = () => {
                 column={column}
                 taskActions={taskActions}
                 onTaskClick={handleTaskClick}
+                addTask={addTask}
               />
             ))}
           </div>
         </DndContext>
 
-        <Drawer isOpen={!!selectedTask} drawerRef={drawerRef}>
-          {selectedTask &&
-            selectedDrawerItem?.type === "task" &&
-            selectedDrawerItem && (
-              <TaskDetails
-                task={selectedTask}
-                columnId={selectedDrawerItem.columnId}
-                taskActions={taskActions}
-                onClose={handleCloseTaskDetails}
-                onSubtaskClick={handleSubtaskClick}
-              />
-            )}
-
-          {selectedTask &&
-            selectedSubtask &&
-            selectedDrawerItem?.type === "subtask" && (
-              <SubtaskDetails
-                subtask={selectedSubtask}
-                parentTask={{ id: selectedTask.id, name: selectedTask.name }}
-                onBack={handleBackToTask}
-                onClose={handleCloseTaskDetails}
-              />
-            )}
+        <Drawer isOpen={!!selectedItem} drawerRef={drawerRef}>
+          {selectedDrawerItem && selectedItem && selectedTask && (
+            <TaskDetails
+              item={selectedItem}
+              rootTaskId={selectedDrawerItem.taskId}
+              subtaskPath={subtaskPath}
+              columnId={selectedDrawerItem.columnId}
+              taskActions={taskActions}
+              onClose={handleCloseTaskDetails}
+              onSubtaskClick={handleSubtaskClick}
+              onBackToTask={handleBackToTask}
+              isRootTask={isRootView}
+            />
+          )}
         </Drawer>
 
         <div className="flex-1 pl-5 min-w-96 shrink-0">

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { Subtask } from "@/entities/task/model/task";
+import type { Subtask, Task } from "@/entities/task/model/task";
 
 import type { KanbanBoardModel } from "..";
 
@@ -15,6 +15,11 @@ import {
   updateActiveBoard,
   updateTaskInColumn,
 } from "../helpers/store.helpers";
+import {
+  addSubtaskUnderParentPath,
+  mapSubtaskAtPath,
+  maxIdInTree,
+} from "../helpers/task-tree.helpers";
 
 export type BoardState = {
   boards: KanbanBoardModel[];
@@ -25,19 +30,38 @@ export type BoardState = {
 
   addColumn: (title: string) => void;
 
+  /** Добавить задачу в конец указанного столбца активной доски */
+  addTask: (columnId: number, title: string) => void;
+
   moveTask: (taskId: number, toColumnId: number) => void;
 
   toggleTaskCompletion: (taskId: number, columnId: number) => void;
+  /** path — цепочка id подзадач от корня задачи; длина >= 1 */
   toggleSubtaskCompletion: (
-    taskId: number,
+    rootTaskId: number,
     columnId: number,
-    subtaskId: number,
+    path: number[],
   ) => void;
 
-  startTaskTimer: (taskId: number, columnId: number) => void;
-  stopTaskTimer: (taskId: number, columnId: number) => void;
+  /** subtaskPath не передан или пустой — таймер у корневой задачи; иначе у подзадачи по пути */
+  startTaskTimer: (
+    taskId: number,
+    columnId: number,
+    subtaskPath?: number[],
+  ) => void;
+  stopTaskTimer: (
+    taskId: number,
+    columnId: number,
+    subtaskPath?: number[],
+  ) => void;
 
-  addSubtask: (taskId: number, columnId: number, title: string) => void;
+  /** parentPath пустой — добавить к корневой задаче, иначе к подзадаче по пути */
+  addSubtask: (
+    rootTaskId: number,
+    columnId: number,
+    parentPath: number[],
+    title: string,
+  ) => void;
 };
 
 const INITIAL_BOARD: KanbanBoardModel = {
@@ -98,6 +122,50 @@ export const useBoardStore = create<BoardState>()(
               ],
             }),
           );
+
+          return {
+            boards,
+            board,
+          };
+        }),
+
+      addTask: (columnId, title) =>
+        set((state) => {
+          const { boards, board } = updateActiveBoard(state, (currentBoard) => {
+            const maxId = currentBoard.columns.reduce(
+              (boardMax, col) =>
+                Math.max(
+                  boardMax,
+                  col.tasks.reduce(
+                    (m, task) => Math.max(m, maxIdInTree(task)),
+                    0,
+                  ),
+                ),
+              0,
+            );
+
+            const newTask: Task = {
+              id: maxId + 1,
+              name: title,
+              timePlanned: 3600,
+              timeSpent: 0,
+              dueDate: new Date(),
+              status: "toDo",
+              isDone: false,
+              timer: { startedAt: null, isRunning: false },
+              subtasks: [],
+              comments: [],
+            };
+
+            return {
+              ...currentBoard,
+              columns: currentBoard.columns.map((col) =>
+                col.id !== columnId
+                  ? col
+                  : { ...col, tasks: [...col.tasks, newTask] },
+              ),
+            };
+          });
 
           return {
             boards,
@@ -176,8 +244,12 @@ export const useBoardStore = create<BoardState>()(
           };
         }),
 
-      toggleSubtaskCompletion: (taskId, columnId, subtaskId) =>
+      toggleSubtaskCompletion: (rootTaskId, columnId, path) =>
         set((state) => {
+          if (path.length === 0) {
+            return state;
+          }
+
           const { boards, board } = updateActiveBoard(
             state,
             (currentBoard) => ({
@@ -185,15 +257,12 @@ export const useBoardStore = create<BoardState>()(
               columns: updateTaskInColumn(
                 currentBoard.columns,
                 columnId,
-                taskId,
-                (task) => ({
-                  ...task,
-                  subtasks: task.subtasks.map((subtask) =>
-                    subtask.id !== subtaskId
-                      ? subtask
-                      : { ...subtask, isDone: !subtask.isDone },
-                  ),
-                }),
+                rootTaskId,
+                (task) =>
+                  mapSubtaskAtPath(task, path, (node) => ({
+                    ...node,
+                    isDone: !node.isDone,
+                  })),
               ),
             }),
           );
@@ -204,9 +273,32 @@ export const useBoardStore = create<BoardState>()(
           };
         }),
 
-      startTaskTimer: (taskId, columnId) =>
+      startTaskTimer: (taskId, columnId, subtaskPath) =>
         set((state) => {
           const now = Date.now();
+
+          if (subtaskPath?.length) {
+            const { boards, board } = updateActiveBoard(
+              state,
+              (currentBoard) => ({
+                ...currentBoard,
+                columns: updateTaskInColumn(
+                  currentBoard.columns,
+                  columnId,
+                  taskId,
+                  (task) =>
+                    mapSubtaskAtPath(task, subtaskPath, (node) => ({
+                      ...node,
+                      timer: {
+                        startedAt: now,
+                        isRunning: true,
+                      },
+                    })),
+                ),
+              }),
+            );
+            return { boards, board };
+          }
 
           const { boards, board } = updateActiveBoard(
             state,
@@ -242,9 +334,36 @@ export const useBoardStore = create<BoardState>()(
           };
         }),
 
-      stopTaskTimer: (taskId, columnId) =>
+      stopTaskTimer: (taskId, columnId, subtaskPath) =>
         set((state) => {
           const now = Date.now();
+
+          if (subtaskPath?.length) {
+            const { boards, board } = updateActiveBoard(
+              state,
+              (currentBoard) => ({
+                ...currentBoard,
+                columns: updateTaskInColumn(
+                  currentBoard.columns,
+                  columnId,
+                  taskId,
+                  (task) =>
+                    mapSubtaskAtPath(task, subtaskPath, (node) => {
+                      if (!node.timer.isRunning) {
+                        return node;
+                      }
+                      const diff = now - (node.timer.startedAt ?? now);
+                      return {
+                        ...node,
+                        timeSpent: node.timeSpent + Math.floor(diff / 1000),
+                        timer: { startedAt: null, isRunning: false },
+                      };
+                    }),
+                ),
+              }),
+            );
+            return { boards, board };
+          }
 
           const { boards, board } = updateActiveBoard(
             state,
@@ -281,43 +400,37 @@ export const useBoardStore = create<BoardState>()(
           };
         }),
 
-      addSubtask: (taskId, columnId, title) =>
+      addSubtask: (rootTaskId, columnId, parentPath, title) =>
         set((state) => {
           const { boards, board } = updateActiveBoard(
             state,
             (currentBoard) => ({
               ...currentBoard,
-              columns: currentBoard.columns.map((column) => {
-                if (column.id !== columnId) {
-                  return column;
-                }
-
-                return {
-                  ...column,
-                  tasks: column.tasks.map((task) => {
-                    if (task.id !== taskId) {
-                      return task;
-                    }
-
-                    const maxSubtaskId = task.subtasks.reduce(
-                      (max, subtask) => Math.max(max, subtask.id),
-                      0,
-                    );
-
-                    const newSubtask: Subtask = {
-                      id: maxSubtaskId + 1,
-                      name: title,
-                      isDone: false,
-                      comments: [],
-                    };
-
-                    return {
-                      ...task,
-                      subtasks: [...task.subtasks, newSubtask],
-                    };
-                  }),
-                };
-              }),
+              columns: updateTaskInColumn(
+                currentBoard.columns,
+                columnId,
+                rootTaskId,
+                (task) => {
+                  const nextId = maxIdInTree(task) + 1;
+                  const newSubtask: Subtask = {
+                    id: nextId,
+                    name: title,
+                    timePlanned: 0,
+                    timeSpent: 0,
+                    dueDate: new Date(),
+                    status: "toDo",
+                    isDone: false,
+                    timer: { startedAt: null, isRunning: false },
+                    subtasks: [],
+                    comments: [],
+                  };
+                  return addSubtaskUnderParentPath(
+                    task,
+                    parentPath,
+                    newSubtask,
+                  );
+                },
+              ),
             }),
           );
 
