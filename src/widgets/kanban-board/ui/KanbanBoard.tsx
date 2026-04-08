@@ -6,6 +6,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import dayjs from "dayjs";
 import { useRef, useState } from "react";
 
 import { useBoardActions } from "@/features/board-actions";
@@ -21,6 +22,26 @@ import { PlusIcon } from "@/shared/icons";
 import { Drawer } from "@/shared/ui";
 
 import { KanbanBoardHeader } from "./KanbanHeader";
+
+const formatDateRu = (value: Date) => dayjs(value).format("D MMMM");
+
+const getLatestCompletedDate = (tasks: TaskModel[]): Date | null => {
+  let latestTimestamp = -1;
+
+  for (const task of tasks) {
+    if (!task.isDone || !task.completedAt) {
+      continue;
+    }
+
+    const completedAt = new Date(task.completedAt);
+    const timestamp = completedAt.getTime();
+    if (!Number.isNaN(timestamp) && timestamp > latestTimestamp) {
+      latestTimestamp = timestamp;
+    }
+  }
+
+  return latestTimestamp >= 0 ? new Date(latestTimestamp) : null;
+};
 
 export const KanbanBoard = () => {
   const { addColumn, addTask } = useBoardActions();
@@ -43,6 +64,13 @@ export const KanbanBoard = () => {
   );
 
   const columns = useBoardStore((state) => state.board.columns);
+
+  const latestCompletedDate = getLatestCompletedDate(
+    columns.flatMap((column) => column.tasks),
+  );
+  const latestCompletedDateLabel = latestCompletedDate
+    ? formatDateRu(latestCompletedDate)
+    : "нет выполненных задач";
 
   const selectedTask = selectedDrawerItem
     ? columns
@@ -125,7 +153,7 @@ export const KanbanBoard = () => {
 
   return (
     <div className="bg-white rounded-tl-[10px] pl-5 h-full">
-      <KanbanBoardHeader />
+      <KanbanBoardHeader lastCompletedTaskDate={latestCompletedDateLabel} />
 
       <div className="mt-4 flex items-start h-full">
         <DndContext

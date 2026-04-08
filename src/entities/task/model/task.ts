@@ -6,6 +6,7 @@ export type Task = {
   dueDate: Date;
   status: TaskStatus;
   isDone: boolean;
+  completedAt?: Date;
   timer: TaskTimer;
   subtasks: Subtask[];
   comments: Comment[];

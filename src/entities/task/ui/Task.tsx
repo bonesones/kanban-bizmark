@@ -3,9 +3,11 @@ import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
-import { BranchIcon } from "@/shared/icons";
+import { useClickOutside } from "@/shared/hooks";
+import { BranchIcon, BurgerIcon, CalendarIcon, PlusIcon } from "@/shared/icons";
+import { UserIcon } from "@/shared/icons/UserIcon";
 import { formatTime } from "@/shared/lib";
 
 import "dayjs/locale/ru";
@@ -31,6 +33,9 @@ type TaskProps = {
 
 export const Task = ({ task, columnId, actions, onClick }: TaskProps) => {
   const [isSubtasksOpen, setIsSubtasksOpen] = useState(false);
+  const [isAddSubtaskOpen, setIsAddSubtaskOpen] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const addSubtaskFormRef = useRef<HTMLDivElement>(null);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -92,6 +97,25 @@ export const Task = ({ task, columnId, actions, onClick }: TaskProps) => {
     onClick?.(task.id, columnId);
   };
 
+  const handleSubmitSubtask = () => {
+    const title = newSubtaskTitle.trim();
+    if (!title) {
+      return;
+    }
+
+    actions.addSubtask(task.id, columnId, [], title);
+    setNewSubtaskTitle("");
+    setIsAddSubtaskOpen(false);
+  };
+
+  useClickOutside(addSubtaskFormRef, () => {
+    if (!isAddSubtaskOpen) {
+      return;
+    }
+    setIsAddSubtaskOpen(false);
+    setNewSubtaskTitle("");
+  });
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -115,6 +139,16 @@ export const Task = ({ task, columnId, actions, onClick }: TaskProps) => {
         />
 
         <h3 className="text-sm text-textMain">{task.name}</h3>
+
+        {isSubtasksOpen && (
+          <button
+            type="button"
+            onClick={handleToggleSubtasks}
+            className="cursor-pointer self-center"
+          >
+            <BurgerIcon className="h-3.5 text-lightGray" />
+          </button>
+        )}
       </div>
 
       <div className="flex justify-between items-center relative">
@@ -214,6 +248,8 @@ export const Task = ({ task, columnId, actions, onClick }: TaskProps) => {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
             <div className=" flex flex-col gap-4">
               {task.subtasks.map((subtask) => (
@@ -225,6 +261,53 @@ export const Task = ({ task, columnId, actions, onClick }: TaskProps) => {
                   toggleSubtaskCompletion={actions.toggleSubtaskCompletion}
                 />
               ))}
+
+              <div ref={addSubtaskFormRef}>
+                {isAddSubtaskOpen && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newSubtaskTitle}
+                      autoFocus
+                      placeholder="Введите название..."
+                      className="w-full rounded-lg border-t border-t-secondaryWhite py-2 text-sm focus:outline-none"
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSubmitSubtask();
+                        }
+                      }}
+                    />
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="border border-dashed border-metaGray w-6 h-6 rounded-full flex items-center justify-center cursor-pointer"
+                      >
+                        <CalendarIcon className="h-3 text-metaGray" />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="border border-dashed border-metaGray w-6 h-6 rounded-full flex items-center justify-center cursor-pointer"
+                      >
+                        <UserIcon className="h-3.75 text-metaGray" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-sm text-gray cursor-pointer"
+                  onClick={() => setIsAddSubtaskOpen(true)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <PlusIcon className="h-2.25" />
+                  Добавить подзадачу
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

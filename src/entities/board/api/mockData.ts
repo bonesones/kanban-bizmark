@@ -449,6 +449,7 @@ export const MOCK_COLUMNS = [
         dueDate: new Date(),
         status: "done",
         isDone: true,
+        completedAt: new Date(Date.now() - 30 * 60 * 1000),
         timer: { startedAt: null, isRunning: false },
         comments: [
           {
@@ -471,6 +472,7 @@ export const MOCK_COLUMNS = [
             dueDate: new Date(Date.now() - 14 * 60 * 60 * 1000),
             status: "done",
             isDone: true,
+            completedAt: new Date(Date.now() - 50 * 60 * 1000),
             timer: { startedAt: null, isRunning: false },
             subtasks: [
               {
@@ -508,6 +510,7 @@ export const MOCK_COLUMNS = [
             dueDate: new Date(Date.now() - 15 * 60 * 60 * 1000),
             status: "done",
             isDone: true,
+            completedAt: new Date(Date.now() - 40 * 60 * 1000),
             timer: { startedAt: null, isRunning: false },
             subtasks: [
               {
@@ -1339,6 +1342,7 @@ export const MOCK_COLUMNS_THIRD_BOARD = [
         dueDate: new Date(),
         status: "done",
         isDone: true,
+        completedAt: new Date(Date.now() - 70 * 60 * 1000),
         timer: { startedAt: null, isRunning: false },
         comments: [
           {
@@ -1356,6 +1360,7 @@ export const MOCK_COLUMNS_THIRD_BOARD = [
             dueDate: new Date(Date.now() - 322 * 60 * 1000),
             status: "done",
             isDone: true,
+            completedAt: new Date(Date.now() - 90 * 60 * 1000),
             timer: { startedAt: null, isRunning: false },
             subtasks: [
               {
@@ -1393,6 +1398,7 @@ export const MOCK_COLUMNS_THIRD_BOARD = [
             dueDate: new Date(Date.now() - 323 * 60 * 1000),
             status: "done",
             isDone: true,
+            completedAt: new Date(Date.now() - 80 * 60 * 1000),
             timer: { startedAt: null, isRunning: false },
             subtasks: [
               {

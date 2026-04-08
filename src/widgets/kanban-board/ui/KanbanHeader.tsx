@@ -1,9 +1,15 @@
 import { FilterIcon, SortIcon } from "@/shared/icons";
 
-export const KanbanBoardHeader = () => (
+type KanbanBoardHeaderProps = {
+  lastCompletedTaskDate: string;
+};
+
+export const KanbanBoardHeader = ({
+  lastCompletedTaskDate,
+}: KanbanBoardHeaderProps) => (
   <div className="flex justify-between items-center border-b border-bgPrimary h-10 pr-5">
     <span className="text-sm text-gray">
-      Последняя выполненная задача: 10 марта
+      Последняя выполненная задача: {lastCompletedTaskDate}
     </span>
 
     <div className="flex gap-5">

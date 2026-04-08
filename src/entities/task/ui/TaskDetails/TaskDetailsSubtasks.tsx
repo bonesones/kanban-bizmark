@@ -96,14 +96,14 @@ const TaskDetailSubtasksItem = ({
     <div className="flex gap-2">
       <button
         type="button"
-        className="border border-dashed border-metaGray w-fit rounded-full p-1.75 cursor-pointer"
+        className="border border-dashed border-metaGray w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"
       >
         <CalendarIcon className="h-3 text-metaGray" />
       </button>
 
       <button
         type="button"
-        className="border border-dashed border-metaGray w-fit rounded-full p-1.75 cursor-pointer"
+        className="border border-dashed border-metaGray w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"
       >
         <UserIcon className="h-3.75 text-metaGray" />
       </button>

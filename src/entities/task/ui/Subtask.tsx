@@ -20,7 +20,12 @@ export const Subtask = ({
   columnId,
   toggleSubtaskCompletion,
 }: SubtaskProps) => (
-  <div className={clsx("flex justify-between", subtask.isDone && "opacity-50")}>
+  <div
+    className={clsx(
+      "flex justify-between gap-1",
+      subtask.isDone && "opacity-50",
+    )}
+  >
     <div className="flex gap-2 items-center">
       <TaskCompletionButton
         type="subtask"

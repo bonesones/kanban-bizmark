@@ -30,20 +30,18 @@ export type BoardState = {
 
   addColumn: (title: string) => void;
 
-  /** Добавить задачу в конец указанного столбца активной доски */
   addTask: (columnId: number, title: string) => void;
 
   moveTask: (taskId: number, toColumnId: number) => void;
 
   toggleTaskCompletion: (taskId: number, columnId: number) => void;
-  /** path — цепочка id подзадач от корня задачи; длина >= 1 */
+
   toggleSubtaskCompletion: (
     rootTaskId: number,
     columnId: number,
     path: number[],
   ) => void;
 
-  /** subtaskPath не передан или пустой — таймер у корневой задачи; иначе у подзадачи по пути */
   startTaskTimer: (
     taskId: number,
     columnId: number,
@@ -55,7 +53,6 @@ export type BoardState = {
     subtaskPath?: number[],
   ) => void;
 
-  /** parentPath пустой — добавить к корневой задаче, иначе к подзадаче по пути */
   addSubtask: (
     rootTaskId: number,
     columnId: number,
@@ -233,7 +230,14 @@ export const useBoardStore = create<BoardState>()(
                 currentBoard.columns,
                 columnId,
                 taskId,
-                (task) => ({ ...task, isDone: !task.isDone }),
+                (task) => {
+                  const isDone = !task.isDone;
+                  return {
+                    ...task,
+                    isDone,
+                    completedAt: isDone ? new Date() : undefined,
+                  };
+                },
               ),
             }),
           );
@@ -259,10 +263,14 @@ export const useBoardStore = create<BoardState>()(
                 columnId,
                 rootTaskId,
                 (task) =>
-                  mapSubtaskAtPath(task, path, (node) => ({
-                    ...node,
-                    isDone: !node.isDone,
-                  })),
+                  mapSubtaskAtPath(task, path, (node) => {
+                    const isDone = !node.isDone;
+                    return {
+                      ...node,
+                      isDone,
+                      completedAt: isDone ? new Date() : undefined,
+                    };
+                  }),
               ),
             }),
           );

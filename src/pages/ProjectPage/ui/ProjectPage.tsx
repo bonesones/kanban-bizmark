@@ -3,7 +3,7 @@ import { Header } from "@/widgets/header";
 import { KanbanBoard } from "@/widgets/kanban-board";
 
 export const ProjectPage = () => (
-  <div className="flex h-screen">
+  <div className="flex min-h-screen">
     <Sidebar />
 
     <div className="pl-5 flex-1 flex flex-col overflow-hidden">
